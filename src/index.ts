@@ -18,10 +18,6 @@ const db = new Database('db.sqlite', (error) => {
   else {
     console.log('Database connected');
   }
-
-  // Create Table and parse Swift Codes
-
-
 });
 
 app.use(express.json());
