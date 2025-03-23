@@ -20,7 +20,7 @@ export const parseSwiftCodes = (db: Database): Promise<void> => {
     console.log(`Parsed ${data.length} SWIFT code entries`);
     
     const insertQuery = `
-      INSERT INTO swift_codes (
+      INSERT OR IGNORE INTO swift_codes (
         swift_code, country_iso2, code_type, bank_name, address, town_name, country_name,
         time_zone, is_headquarter, headquarter_code
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -43,8 +43,13 @@ export const parseSwiftCodes = (db: Database): Promise<void> => {
         data.forEach((row: any, index: number) => {
           const swiftCode = row['SWIFT CODE'];
           
-          if (!swiftCode) {
+          if(!swiftCode || !row['COUNTRY ISO2 CODE'] || !row['NAME']) {
             console.warn(`Row ${index + 1} truly missing SWIFT CODE:`, JSON.stringify(row));
+            return;
+          }
+
+          if (swiftCode.length !== 8 && swiftCode.length !== 11) {
+            console.warn(`Invalid SWIFT CODE length at row ${index + 1}: ${swiftCode}`);
             return;
           }
           

@@ -19,34 +19,50 @@ export const initializeDatabase = (): Promise<Database> => {
 };
 
 const createTables = (db: Database): Promise<void> => {
-    return new Promise((resolve,reject) => {
-        db.run(`
+    return new Promise((resolve, reject) => {
+      db.run(`
         CREATE TABLE IF NOT EXISTS swift_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            swift_code TEXT UNIQUE NOT NULL,
-            country_iso2 TEXT NOT NULL,
-            code_type TEXT NOT NULL,
-            bank_name TEXT NOT NULL,
-            address TEXT,
-            town_name TEXT NOT NULL,
-            country_name TEXT NOT NULL,
-            time_zone TEXT NOT NULL,
-            is_headquarter BOOLEAN NOT NULL,
-            headquarter_code TEXT,
-            FOREIGN KEY (headquarter_code) REFERENCES swift_codes(swift_code)
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          swift_code TEXT UNIQUE NOT NULL,
+          country_iso2 TEXT NOT NULL,
+          code_type TEXT NOT NULL,
+          bank_name TEXT NOT NULL,
+          address TEXT,
+          town_name TEXT NOT NULL,
+          country_name TEXT NOT NULL,
+          time_zone TEXT NOT NULL,
+          is_headquarter BOOLEAN NOT NULL,
+          headquarter_code TEXT,
+          FOREIGN KEY (headquarter_code) REFERENCES swift_codes(swift_code)
         )
-        `, (err) => {
-            if(err) {
-                console.error('Error creating table', err);
-                reject(err);
+      `, (err) => {
+        if (err) {
+          console.error('Error creating table', err);
+          reject(err);
+          return;
+        }
+        
+        db.run(`CREATE INDEX IF NOT EXISTS idx_swift_codes_country_iso2 ON swift_codes(country_iso2)`, (err) => {
+          if (err) {
+            console.error('Error creating country_iso2 index', err);
+            reject(err);
+            return;
+          }
+          
+          db.run(`CREATE INDEX IF NOT EXISTS idx_swift_codes_headquarter ON swift_codes(headquarter_code)`, (err) => {
+            if (err) {
+              console.error('Error creating headquarter_code index', err);
+              reject(err);
+              return;
             }
-            else {
-                console.log('Table created or already exists');
-                resolve();
-            }
+            
+            console.log('Table and indexes created or already exist');
+            resolve();
+          });
         });
+      });
     });
-};
+  };
 
 const checkAndImportData = (db: Database): Promise<void> => {
     return new Promise((resolve,reject) => {
@@ -61,6 +77,7 @@ const checkAndImportData = (db: Database): Promise<void> => {
                         .catch(reject)
                 });
             } else {
+                console.log(`Number of rows: ${row.count}`);
                 resolve();
             }
         });
