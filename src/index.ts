@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { Database } from 'sqlite3'
-import * as fs from 'fs'; // file system module
-import * as XLSX from 'xlsx'; // parsing excel files module
+import { getDatabase } from './lib/database';
+import { parseSwiftCodes } from './lib/dataImport';
+
 
 // Load environment variables and asign a port.
 require('dotenv').config();
@@ -10,18 +10,18 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 
-// Setup a database
-const db = new Database('db.sqlite', (error) => {
-  if(error) {
-    console.error('Error opening a database: ', error);
-  }
-  else {
-    console.log('Database connected');
-  }
-});
-
 app.use(express.json());
 app.use(cors());
+
+const testDatabaseAndImport = async () => {
+    try {
+        const db = await getDatabase();
+    } catch (error) {
+        console.error('Error during testing:', error);
+    }
+};
+
+testDatabaseAndImport(); 
 
 app.get('/', (req, res) => {
     res.send('Test');
